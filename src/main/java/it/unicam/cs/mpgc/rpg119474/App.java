@@ -1,27 +1,22 @@
 package it.unicam.cs.mpgc.rpg119474;
 
-import it.unicam.cs.mpgc.rpg119474.core.ability.Abilities;
 import it.unicam.cs.mpgc.rpg119474.core.ability.Ability;
-import it.unicam.cs.mpgc.rpg119474.core.ability.EffectResult;
-import it.unicam.cs.mpgc.rpg119474.core.attribute.AttributeModifier;
-import it.unicam.cs.mpgc.rpg119474.core.attribute.Attributes;
 import it.unicam.cs.mpgc.rpg119474.core.character.Enemy;
 import it.unicam.cs.mpgc.rpg119474.core.character.PlayerCharacter;
 import it.unicam.cs.mpgc.rpg119474.core.character.SurvivorClass;
 import it.unicam.cs.mpgc.rpg119474.core.dice.RandomSource;
-import it.unicam.cs.mpgc.rpg119474.core.item.Rarity;
-import it.unicam.cs.mpgc.rpg119474.core.item.Weapon;
-import it.unicam.cs.mpgc.rpg119474.core.stats.DamageType;
+import it.unicam.cs.mpgc.rpg119474.engine.DefaultGameService;
+import it.unicam.cs.mpgc.rpg119474.engine.GameService;
+import it.unicam.cs.mpgc.rpg119474.engine.ai.EnemyStrategies;
+import it.unicam.cs.mpgc.rpg119474.engine.combat.CombatEvent;
+import it.unicam.cs.mpgc.rpg119474.engine.factory.CharacterFactory;
+import it.unicam.cs.mpgc.rpg119474.engine.factory.EnemyFactory;
 
-import java.util.List;
+import java.util.Comparator;
 
 /**
- * Punto di ingresso dell'applicazione.
- * <p>
- * In questa fase mostra una breve dimostrazione del modulo {@code core}: crea un
- * sopravvissuto, ne stampa la scheda e applica un'abilita' su un nemico. Verra'
- * sostituita dal motore di combattimento (Parte 2) e poi dalla GUI JavaFX, senza
- * toccare il dominio.
+ * Punto di ingresso: dimostrazione testuale di un duello a turni.
+ * Verra' sostituita dalla GUI JavaFX, che usera' lo stesso {@link GameService}.
  */
 public final class App {
 
@@ -31,33 +26,38 @@ public final class App {
 
     public static void main(String[] args) {
         RandomSource rng = RandomSource.seeded(7);
+        PlayerCharacter hero = CharacterFactory.createSurvivor("Bruto", SurvivorClass.BRUTO);
+        Enemy enemy = EnemyFactory.raider();
 
-        PlayerCharacter hero = new PlayerCharacter("Vagabondo", SurvivorClass.CECCHINO);
-        hero.equip(new Weapon("Fucile arrugginito", Rarity.COMUNE, "Recuperato in una stazione di servizio",
-                DamageType.BALISTICO, 6, new AttributeModifier(0, 2, 0, 0, 0)));
+        GameService game = new DefaultGameService(rng);
+        game.startDuel(hero, enemy, EnemyStrategies.aggressive(),
+                event -> System.out.println(describe(event)));
 
-        printSheet(hero);
-
-        Enemy raider = new Enemy("Predone", new Attributes(5, 4, 4, 5, 2), 6,
-                List.of(Abilities.basicMelee()), 60);
-
-        System.out.println();
-        System.out.println("== Scontro dimostrativo ==");
-        Ability aimedShot = hero.abilities().get(0);
-        EffectResult result = aimedShot.applyTo(hero, raider, rng);
-        System.out.println(result.message()
-                + " (Predone PV " + raider.currentHealth() + "/" + raider.maxHealth() + ")");
+        // Giocatore automatico: usa l'abilita' piu' forte che puo' permettersi, poi passa.
+        int guard = 0;
+        while (!game.isOver() && guard++ < 1000) {
+            Ability chosen = hero.abilities().stream()
+                    .filter(ability -> ability.actionPointCost() <= game.currentActionPoints())
+                    .max(Comparator.comparingInt(Ability::actionPointCost))
+                    .orElse(hero.abilities().get(0));
+            game.playerUseAbility(chosen, enemy);
+            if (!game.isOver()) {
+                game.playerEndTurn();
+            }
+        }
     }
 
-    private static void printSheet(PlayerCharacter hero) {
-        Attributes a = hero.attributes();
-        System.out.println("Sopravvissuto: " + hero.name()
-                + " [" + hero.survivorClass().displayName() + "] liv." + hero.level());
-        System.out.println("Attributi   Forza " + a.forza() + " | Percezione " + a.percezione()
-                + " | Resistenza " + a.resistenza() + " | Agilita' " + a.agilita() + " | Fortuna " + a.fortuna());
-        System.out.println("Derivate    PV " + hero.maxHealth() + " | Difesa " + hero.derived().defense()
-                + " | Iniziativa " + hero.derived().initiative() + " | PA " + hero.derived().maxActionPoints()
-                + " | Critico " + hero.derived().critChance() + "%");
-        System.out.println("Abilita'    " + hero.abilities().stream().map(Ability::name).toList());
+    /** Traduce un evento in testo con uno switch esaustivo sulla gerarchia sealed. */
+    private static String describe(CombatEvent event) {
+        return switch (event) {
+            case CombatEvent.CombatStarted s ->
+                    "Inizia lo scontro: " + s.player().name() + " contro " + s.enemy().name();
+            case CombatEvent.TurnStarted t ->
+                    "-- Turno di " + t.actor().name() + " (PA " + t.actionPoints() + ")";
+            case CombatEvent.AbilityUsed a -> "   " + a.result().message();
+            case CombatEvent.CharacterDefeated d ->
+                    "   " + d.character().name() + " e' stato sconfitto!";
+            case CombatEvent.CombatEnded c -> "Vince " + c.winner().name() + "!";
+        };
     }
 }
