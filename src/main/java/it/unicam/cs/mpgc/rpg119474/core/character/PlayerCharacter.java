@@ -106,4 +106,24 @@ public class PlayerCharacter extends AbstractCharacter {
     public Optional<Armor> armor() {
         return Optional.ofNullable(armor);
     }
+
+    /** Crea la fotografia salvabile dello stato attuale del personaggio. */
+    public CharacterSnapshot toSnapshot() {
+        return new CharacterSnapshot(name(), survivorClass, experience, currentHealth(),
+                weapon, armor);
+    }
+
+    /** Ricostruisce un personaggio a partire da una fotografia salvata. */
+    public static PlayerCharacter fromSnapshot(CharacterSnapshot snapshot) {
+        PlayerCharacter survivor = new PlayerCharacter(snapshot.name(), snapshot.survivorClass());
+        if (snapshot.weapon() != null) {
+            survivor.equip(snapshot.weapon());
+        }
+        if (snapshot.armor() != null) {
+            survivor.equip(snapshot.armor());
+        }
+        survivor.gainExperience(snapshot.experience());
+        survivor.setCurrentHealth(snapshot.currentHealth());
+        return survivor;
+    }
 }
