@@ -29,7 +29,7 @@ dependencies {
 
 application {
     // I due comandi richiesti dalla specifica: ./gradlew build e ./gradlew run
-    mainClass = 'it.unicam.cs.mpgc.rpg119474.App'
+    mainClass = 'it.unicam.cs.mpgc.rpg119474.ui.Launcher'
 }
 
 tasks.named('test') {
