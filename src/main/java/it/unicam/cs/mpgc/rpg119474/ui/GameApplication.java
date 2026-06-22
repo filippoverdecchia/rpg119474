@@ -1,22 +1,35 @@
 package it.unicam.cs.mpgc.rpg119474.ui;
 
+import it.unicam.cs.mpgc.rpg119474.core.character.Enemy;
+import it.unicam.cs.mpgc.rpg119474.core.character.PlayerCharacter;
+import it.unicam.cs.mpgc.rpg119474.core.character.SurvivorClass;
+import it.unicam.cs.mpgc.rpg119474.core.dice.RandomSource;
+import it.unicam.cs.mpgc.rpg119474.engine.DefaultGameService;
+import it.unicam.cs.mpgc.rpg119474.engine.GameService;
+import it.unicam.cs.mpgc.rpg119474.engine.ai.EnemyStrategies;
+import it.unicam.cs.mpgc.rpg119474.engine.factory.CharacterFactory;
+import it.unicam.cs.mpgc.rpg119474.engine.factory.EnemyFactory;
+
 import javafx.application.Application;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
-/** Applicazione JavaFX. Per ora mostra solo una finestra iniziale (verifica dell'impalcatura). */
+/** Applicazione JavaFX: avvia un duello e mostra la schermata di combattimento. */
 public class GameApplication extends Application {
 
     @Override
     public void start(Stage stage) {
-        Label titolo = new Label("Wasteland — duelli a turni");
-        StackPane root = new StackPane(titolo);
-        root.setAlignment(Pos.CENTER);
-        Scene scene = new Scene(root, 800, 600);
-        stage.setTitle("Wasteland");
+        RandomSource rng = RandomSource.systemDefault();
+        PlayerCharacter player = CharacterFactory.createSurvivor("Sopravvissuto", SurvivorClass.BRUTO);
+        Enemy enemy = EnemyFactory.raider();
+
+        GameService game = new DefaultGameService(rng);
+        CombatView view = new CombatView(game, player, enemy);
+        game.startDuel(player, enemy, EnemyStrategies.aggressive(), view::onEvent);
+        view.refresh();
+
+        Scene scene = new Scene(view.getRoot(), 900, 600);
+        stage.setTitle("Wasteland — Duello");
         stage.setScene(scene);
         stage.show();
     }
