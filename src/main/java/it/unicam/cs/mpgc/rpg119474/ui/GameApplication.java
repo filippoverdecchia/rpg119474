@@ -9,6 +9,7 @@ import it.unicam.cs.mpgc.rpg119474.engine.DefaultGameService;
 import it.unicam.cs.mpgc.rpg119474.engine.GameService;
 import it.unicam.cs.mpgc.rpg119474.engine.ai.EnemyStrategies;
 import it.unicam.cs.mpgc.rpg119474.engine.factory.CharacterFactory;
+import it.unicam.cs.mpgc.rpg119474.engine.factory.EnemyFactory;
 import it.unicam.cs.mpgc.rpg119474.persistence.FileRepository;
 import it.unicam.cs.mpgc.rpg119474.persistence.Repository;
 
@@ -18,7 +19,7 @@ import javafx.stage.Stage;
 
 import java.nio.file.Path;
 
-/** Applicazione JavaFX: schermata iniziale, duello, salvataggio/caricamento. */
+/** Applicazione JavaFX: schermata iniziale, duelli a catena, salvataggio/caricamento, progressione. */
 public class GameApplication extends Application {
 
     private final RandomSource rng = RandomSource.systemDefault();
@@ -52,10 +53,34 @@ public class GameApplication extends Application {
         GameService game = new DefaultGameService(rng);
         CombatView view = new CombatView(game, player, enemy,
                 () -> repository.save(saveId(player), player.toSnapshot()),
-                this::showSetup);
+                this::showSetup,
+                () -> awardVictory(player, enemy),
+                () -> openCombat(player, randomEnemy()));
         game.startDuel(player, enemy, EnemyStrategies.aggressive(), view::onEvent);
         view.refresh();
         stage.setScene(new Scene(view.getRoot(), 900, 600));
+    }
+
+    /** Assegna l'esperienza del nemico, applica eventuali salite di livello e recupera i PV. */
+    private String awardVictory(PlayerCharacter player, Enemy enemy) {
+        int levelBefore = player.level();
+        player.gainExperience(enemy.experienceReward());
+        player.heal(player.maxHealth());
+        int levelAfter = player.level();
+        String message = "Hai guadagnato " + enemy.experienceReward() + " punti esperienza.";
+        if (levelAfter > levelBefore) {
+            message += " Sei salito al livello " + levelAfter + "!";
+        }
+        return message;
+    }
+
+    private Enemy randomEnemy() {
+        return switch (rng.nextInt(4)) {
+            case 0 -> EnemyFactory.mutantDog();
+            case 1 -> EnemyFactory.ghoul();
+            case 2 -> EnemyFactory.raiderBoss();
+            default -> EnemyFactory.raider();
+        };
     }
 
     private static String saveId(PlayerCharacter player) {

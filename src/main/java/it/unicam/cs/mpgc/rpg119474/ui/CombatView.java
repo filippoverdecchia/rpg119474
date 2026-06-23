@@ -19,14 +19,24 @@ import javafx.scene.layout.VBox;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Schermata di combattimento: combattenti, log degli eventi, comandi e salvataggio. */
+/** Schermata di combattimento: combattenti, log, comandi, salvataggio e progressione. */
 public class CombatView {
+
+    /** Invocato una volta quando il giocatore vince; restituisce un messaggio da mostrare nel log. */
+    @FunctionalInterface
+    public interface VictoryHandler {
+        String onPlayerVictory();
+    }
 
     private final GameService game;
     private final GameCharacter player;
     private final GameCharacter enemy;
     private final Runnable onSave;
     private final Runnable onBackToMenu;
+    private final VictoryHandler onVictory;
+    private final Runnable onNextEnemy;
+
+    private boolean victoryHandled = false;
 
     private final BorderPane root = new BorderPane();
     private final TextArea log = new TextArea();
@@ -43,14 +53,17 @@ public class CombatView {
     private final Button endTurnButton = new Button("Termina turno");
     private final Button saveButton = new Button("Salva sopravvissuto");
     private final Button menuButton = new Button("Torna al menu");
+    private final Button nextEnemyButton = new Button("Affronta un nuovo nemico");
 
     public CombatView(GameService game, GameCharacter player, GameCharacter enemy,
-                      Runnable onSave, Runnable onBackToMenu) {
+                      Runnable onSave, Runnable onBackToMenu, VictoryHandler onVictory, Runnable onNextEnemy) {
         this.game = game;
         this.player = player;
         this.enemy = enemy;
         this.onSave = onSave;
         this.onBackToMenu = onBackToMenu;
+        this.onVictory = onVictory;
+        this.onNextEnemy = onNextEnemy;
         buildLayout();
         wireActions();
     }
@@ -86,7 +99,8 @@ public class CombatView {
         }
         controls.getChildren().add(endTurnButton);
 
-        HBox actions = new HBox(8, saveButton, menuButton);
+        nextEnemyButton.setDisable(true);
+        HBox actions = new HBox(8, saveButton, menuButton, nextEnemyButton);
         actions.setPadding(new Insets(0, 10, 0, 10));
 
         VBox bottom = new VBox(6, turnLabel, controls, actions, resultLabel);
@@ -114,11 +128,21 @@ public class CombatView {
             log.appendText("Sopravvissuto salvato.\n");
         });
         menuButton.setOnAction(event -> onBackToMenu.run());
+        nextEnemyButton.setOnAction(event -> onNextEnemy.run());
     }
 
-    /** Osservatore degli eventi: aggiunge una riga al log. */
+    /** Osservatore degli eventi: aggiunge una riga al log e gestisce la vittoria del giocatore. */
     public void onEvent(CombatEvent event) {
         log.appendText(describe(event) + "\n");
+        if (event instanceof CombatEvent.CombatEnded ended
+                && ended.winner() == player && !victoryHandled) {
+            victoryHandled = true;
+            String message = onVictory.onPlayerVictory();
+            if (message != null && !message.isBlank()) {
+                log.appendText(message + "\n");
+            }
+            refresh();
+        }
     }
 
     /** Aggiorna barre dei PV, Punti Azione, etichette e stato dei pulsanti. */
@@ -137,6 +161,9 @@ public class CombatView {
             entry.getKey().setDisable(!playerTurn || !affordable);
         }
         endTurnButton.setDisable(!playerTurn);
+
+        boolean playerWon = game.isOver() && game.winner().map(winner -> winner == player).orElse(false);
+        nextEnemyButton.setDisable(!playerWon);
 
         if (game.isOver()) {
             String winner = game.winner().map(GameCharacter::name).orElse("nessuno");
