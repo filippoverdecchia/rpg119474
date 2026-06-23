@@ -19,12 +19,14 @@ import javafx.scene.layout.VBox;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Schermata di combattimento: mostra i combattenti, il log degli eventi e i comandi del giocatore. */
+/** Schermata di combattimento: combattenti, log degli eventi, comandi e salvataggio. */
 public class CombatView {
 
     private final GameService game;
     private final GameCharacter player;
     private final GameCharacter enemy;
+    private final Runnable onSave;
+    private final Runnable onBackToMenu;
 
     private final BorderPane root = new BorderPane();
     private final TextArea log = new TextArea();
@@ -39,11 +41,16 @@ public class CombatView {
 
     private final Map<Button, Ability> abilityButtons = new LinkedHashMap<>();
     private final Button endTurnButton = new Button("Termina turno");
+    private final Button saveButton = new Button("Salva sopravvissuto");
+    private final Button menuButton = new Button("Torna al menu");
 
-    public CombatView(GameService game, GameCharacter player, GameCharacter enemy) {
+    public CombatView(GameService game, GameCharacter player, GameCharacter enemy,
+                      Runnable onSave, Runnable onBackToMenu) {
         this.game = game;
         this.player = player;
         this.enemy = enemy;
+        this.onSave = onSave;
+        this.onBackToMenu = onBackToMenu;
         buildLayout();
         wireActions();
     }
@@ -79,7 +86,10 @@ public class CombatView {
         }
         controls.getChildren().add(endTurnButton);
 
-        VBox bottom = new VBox(6, turnLabel, controls, resultLabel);
+        HBox actions = new HBox(8, saveButton, menuButton);
+        actions.setPadding(new Insets(0, 10, 0, 10));
+
+        VBox bottom = new VBox(6, turnLabel, controls, actions, resultLabel);
         bottom.setPadding(new Insets(10));
 
         root.setTop(top);
@@ -99,6 +109,11 @@ public class CombatView {
             game.playerEndTurn();
             refresh();
         });
+        saveButton.setOnAction(event -> {
+            onSave.run();
+            log.appendText("Sopravvissuto salvato.\n");
+        });
+        menuButton.setOnAction(event -> onBackToMenu.run());
     }
 
     /** Osservatore degli eventi: aggiunge una riga al log. */

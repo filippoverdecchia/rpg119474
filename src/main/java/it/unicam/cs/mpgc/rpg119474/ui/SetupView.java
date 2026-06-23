@@ -11,24 +11,32 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
-/** Schermata iniziale: scelta di nome, classe e nemico prima del duello. */
+import java.util.List;
+
+/** Schermata iniziale: crea un nuovo sopravvissuto o caricane uno salvato. */
 public class SetupView {
 
-    /** Callback invocato quando il giocatore avvia il duello. */
     @FunctionalInterface
     public interface StartHandler {
         void onStart(String name, SurvivorClass survivorClass, Enemy enemy);
+    }
+
+    @FunctionalInterface
+    public interface LoadHandler {
+        void onLoad(String savedId, Enemy enemy);
     }
 
     private final VBox root = new VBox(12);
     private final TextField nameField = new TextField("Sopravvissuto");
     private final ComboBox<SurvivorClass> classBox = new ComboBox<>();
     private final ComboBox<String> enemyBox = new ComboBox<>();
+    private final ComboBox<String> savedBox = new ComboBox<>();
 
-    public SetupView(StartHandler handler) {
+    public SetupView(StartHandler onStart, List<String> savedIds, LoadHandler onLoad) {
         classBox.getItems().setAll(SurvivorClass.values());
         classBox.setValue(SurvivorClass.BRUTO);
         classBox.setConverter(new StringConverter<>() {
@@ -49,7 +57,21 @@ public class SetupView {
         startButton.setOnAction(event -> {
             String name = (nameField.getText() == null || nameField.getText().isBlank())
                     ? "Sopravvissuto" : nameField.getText().trim();
-            handler.onStart(name, classBox.getValue(), createEnemy(enemyBox.getValue()));
+            onStart.onStart(name, classBox.getValue(), createEnemy(enemyBox.getValue()));
+        });
+
+        savedBox.getItems().setAll(savedIds);
+        Button loadButton = new Button("Carica e combatti");
+        boolean hasSaves = !savedIds.isEmpty();
+        savedBox.setDisable(!hasSaves);
+        loadButton.setDisable(!hasSaves);
+        if (hasSaves) {
+            savedBox.setValue(savedIds.get(0));
+        }
+        loadButton.setOnAction(event -> {
+            if (savedBox.getValue() != null) {
+                onLoad.onLoad(savedBox.getValue(), createEnemy(enemyBox.getValue()));
+            }
         });
 
         root.setAlignment(Pos.CENTER);
@@ -59,7 +81,9 @@ public class SetupView {
                 new Label("Nome:"), nameField,
                 new Label("Classe:"), classBox,
                 new Label("Nemico:"), enemyBox,
-                startButton);
+                startButton,
+                new Label("— oppure carica un sopravvissuto salvato —"),
+                new HBox(8, savedBox, loadButton));
     }
 
     public Parent getRoot() {
