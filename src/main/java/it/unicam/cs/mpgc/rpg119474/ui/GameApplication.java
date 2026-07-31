@@ -55,7 +55,7 @@ public class GameApplication extends Application {
                 () -> repository.save(saveId(player), player.toSnapshot()),
                 this::showSetup,
                 () -> awardVictory(player, enemy),
-                () -> openCombat(player, randomEnemy()));
+                () -> openCombat(player, EnemyFactory.random(rng)));
         game.startDuel(player, enemy, EnemyStrategies.aggressive(), view::onEvent);
         view.refresh();
         stage.setScene(new Scene(view.getRoot(), 900, 600));
@@ -72,15 +72,6 @@ public class GameApplication extends Application {
             message += " Sei salito al livello " + levelAfter + "!";
         }
         return message;
-    }
-
-    private Enemy randomEnemy() {
-        return switch (rng.nextInt(4)) {
-            case 0 -> EnemyFactory.mutantDog();
-            case 1 -> EnemyFactory.ghoul();
-            case 2 -> EnemyFactory.raiderBoss();
-            default -> EnemyFactory.raider();
-        };
     }
 
     private static String saveId(PlayerCharacter player) {

@@ -3,7 +3,8 @@ package it.unicam.cs.mpgc.rpg119474.engine.factory;
 import it.unicam.cs.mpgc.rpg119474.core.ability.Abilities;
 import it.unicam.cs.mpgc.rpg119474.core.attribute.Attributes;
 import it.unicam.cs.mpgc.rpg119474.core.character.Enemy;
-
+import it.unicam.cs.mpgc.rpg119474.core.dice.RandomSource;
+import java.util.function.Supplier;
 import java.util.List;
 
 /** Crea i nemici predefiniti del gioco (Factory pattern). */
@@ -31,5 +32,13 @@ public final class EnemyFactory {
     public static Enemy raiderBoss() {
         return new Enemy("Capo dei predoni", new Attributes(7, 7, 6, 6, 4), 9,
                 List.of(Abilities.aimedShot(), Abilities.burstFire(), Abilities.heavyBlow()), 150);
+    }
+
+    private static final List<Supplier<Enemy>> CATALOG =
+            List.of(EnemyFactory::raider, EnemyFactory::mutantDog,
+                    EnemyFactory::ghoul, EnemyFactory::raiderBoss);
+
+    public static Enemy random(RandomSource rng) {
+        return CATALOG.get(rng.nextInt(CATALOG.size())).get();
     }
 }
