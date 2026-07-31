@@ -133,7 +133,7 @@ public class CombatView {
 
     /** Osservatore degli eventi: aggiunge una riga al log e gestisce la vittoria del giocatore. */
     public void onEvent(CombatEvent event) {
-        log.appendText(describe(event) + "\n");
+        log.appendText(CombatEventFormatter.describe(event) + "\n");
         if (event instanceof CombatEvent.CombatEnded ended
                 && ended.winner() == player && !victoryHandled) {
             victoryHandled = true;
@@ -174,18 +174,5 @@ public class CombatView {
     private static double healthFraction(GameCharacter character) {
         return character.maxHealth() == 0 ? 0
                 : (double) character.currentHealth() / character.maxHealth();
-    }
-
-    private static String describe(CombatEvent event) {
-        return switch (event) {
-            case CombatEvent.CombatStarted s ->
-                    "Inizia lo scontro: " + s.player().name() + " contro " + s.enemy().name();
-            case CombatEvent.TurnStarted t ->
-                    "-- Turno di " + t.actor().name() + " (PA " + t.actionPoints() + ")";
-            case CombatEvent.AbilityUsed a -> "   " + a.result().message();
-            case CombatEvent.CharacterDefeated d ->
-                    "   " + d.character().name() + " e' stato sconfitto!";
-            case CombatEvent.CombatEnded c -> "Vince " + c.winner().name() + "!";
-        };
     }
 }
