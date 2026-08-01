@@ -1,6 +1,7 @@
 package it.unicam.cs.mpgc.rpg119474.ui;
 
 import it.unicam.cs.mpgc.rpg119474.engine.combat.CombatEvent;
+import it.unicam.cs.mpgc.rpg119474.engine.progression.VictoryOutcome;
 
 /**
  * Traduce in testo per l'utente gli eventi di combattimento. Sta nello strato di
@@ -26,5 +27,14 @@ public final class CombatEventFormatter {
                     "   " + d.character().name() + " e' stato sconfitto!";
             case CombatEvent.CombatEnded c -> "Vince " + c.winner().name() + "!";
         };
+    }
+
+    /** Descrive la ricompensa ottenuta vincendo il duello. */
+    public static String describe(VictoryOutcome outcome) {
+        String message = "Hai guadagnato " + outcome.experienceGained() + " punti esperienza.";
+        if (outcome.leveledUp()) {
+            message += " Sei salito al livello " + outcome.levelAfter() + "!";
+        }
+        return message;
     }
 }

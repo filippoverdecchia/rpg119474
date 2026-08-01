@@ -54,24 +54,11 @@ public class GameApplication extends Application {
         CombatView view = new CombatView(game, player, enemy,
                 () -> repository.save(saveId(player), player.toSnapshot()),
                 this::showSetup,
-                () -> awardVictory(player, enemy),
+                () -> game.resolveVictory().map(CombatEventFormatter::describe).orElse(""),
                 () -> openCombat(player, EnemyFactory.random(rng)));
         game.startDuel(player, enemy, EnemyStrategies.aggressive(), view::onEvent);
         view.refresh();
         stage.setScene(new Scene(view.getRoot(), 900, 600));
-    }
-
-    /** Assegna l'esperienza del nemico, applica eventuali salite di livello e recupera i PV. */
-    private String awardVictory(PlayerCharacter player, Enemy enemy) {
-        int levelBefore = player.level();
-        player.gainExperience(enemy.experienceReward());
-        player.heal(player.maxHealth());
-        int levelAfter = player.level();
-        String message = "Hai guadagnato " + enemy.experienceReward() + " punti esperienza.";
-        if (levelAfter > levelBefore) {
-            message += " Sei salito al livello " + levelAfter + "!";
-        }
-        return message;
     }
 
     private static String saveId(PlayerCharacter player) {

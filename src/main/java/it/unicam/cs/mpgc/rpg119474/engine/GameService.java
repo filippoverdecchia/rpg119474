@@ -1,10 +1,13 @@
 package it.unicam.cs.mpgc.rpg119474.engine;
 
 import it.unicam.cs.mpgc.rpg119474.core.ability.Ability;
+import it.unicam.cs.mpgc.rpg119474.core.character.Enemy;
 import it.unicam.cs.mpgc.rpg119474.core.character.GameCharacter;
+import it.unicam.cs.mpgc.rpg119474.core.character.PlayerCharacter;
 import it.unicam.cs.mpgc.rpg119474.engine.ai.EnemyStrategy;
 import it.unicam.cs.mpgc.rpg119474.engine.combat.CombatEvent;
 import it.unicam.cs.mpgc.rpg119474.engine.event.Observer;
+import it.unicam.cs.mpgc.rpg119474.engine.progression.VictoryOutcome;
 
 import java.util.Optional;
 
@@ -16,7 +19,7 @@ import java.util.Optional;
 public interface GameService {
 
     /** Avvia un duello tra giocatore e nemico; l'osservatore ricevera' gli eventi. */
-    void startDuel(GameCharacter player, GameCharacter enemy, EnemyStrategy enemyStrategy, Observer<CombatEvent> observer);
+    void startDuel(PlayerCharacter player, Enemy enemy, EnemyStrategy enemyStrategy, Observer<CombatEvent> observer);
 
     GameCharacter currentActor();
 
@@ -31,4 +34,13 @@ public interface GameService {
 
     /** Il giocatore termina il turno; il servizio fa quindi agire il nemico. */
     void playerEndTurn();
+
+    /**
+     * Assegna al giocatore la ricompensa del duello, se lo ha vinto.
+     * Applicata una sola volta per duello: le chiamate successive non hanno effetto.
+     *
+     * @return l'esito della vittoria, oppure {@link Optional#empty()} se il duello
+     *         non e' finito, e' stato perso, o la ricompensa e' gia' stata assegnata
+     */
+    Optional<VictoryOutcome> resolveVictory();
 }
