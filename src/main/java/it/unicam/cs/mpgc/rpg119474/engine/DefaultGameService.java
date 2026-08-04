@@ -14,6 +14,7 @@ import it.unicam.cs.mpgc.rpg119474.engine.event.Observer;
 import it.unicam.cs.mpgc.rpg119474.engine.progression.DefaultProgressionService;
 import it.unicam.cs.mpgc.rpg119474.engine.progression.ProgressionService;
 import it.unicam.cs.mpgc.rpg119474.engine.progression.VictoryOutcome;
+import it.unicam.cs.mpgc.rpg119474.engine.loot.DefaultLootService;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -35,7 +36,7 @@ public class DefaultGameService implements GameService {
     private boolean victoryResolved;
 
     public DefaultGameService(RandomSource rng) {
-        this(rng, new DefaultProgressionService());
+        this(rng, new DefaultProgressionService(new DefaultLootService(rng)));
     }
 
     public DefaultGameService(RandomSource rng, ProgressionService progressionService) {

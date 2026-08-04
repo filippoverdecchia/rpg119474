@@ -1,13 +1,14 @@
 package it.unicam.cs.mpgc.rpg119474.ui;
 
+import it.unicam.cs.mpgc.rpg119474.core.item.Item;
 import it.unicam.cs.mpgc.rpg119474.engine.combat.CombatEvent;
 import it.unicam.cs.mpgc.rpg119474.engine.progression.VictoryOutcome;
 
 /**
- * Traduce in testo per l'utente gli eventi di combattimento. Sta nello strato di
- * presentazione perche' e' formattazione, non logica di gioco: il motore produce
- * eventi, qui diventano frasi. Averla in un solo posto evita che la stessa
- * traduzione venga duplicata in piu' schermate.
+ * Traduce in testo per l'utente gli eventi di combattimento e l'esito di una
+ * vittoria. Sta nello strato di presentazione perche' e' formattazione, non
+ * logica di gioco: il motore produce dati, qui diventano frasi. Averla in un
+ * solo posto evita che la stessa traduzione venga duplicata in piu' schermate.
  */
 public final class CombatEventFormatter {
 
@@ -31,10 +32,16 @@ public final class CombatEventFormatter {
 
     /** Descrive la ricompensa ottenuta vincendo il duello. */
     public static String describe(VictoryOutcome outcome) {
-        String message = "Hai guadagnato " + outcome.experienceGained() + " punti esperienza.";
+        StringBuilder message = new StringBuilder();
+        message.append("Hai guadagnato ").append(outcome.experienceGained()).append(" punti esperienza.");
         if (outcome.leveledUp()) {
-            message += " Sei salito al livello " + outcome.levelAfter() + "!";
+            message.append(" Sei salito al livello ").append(outcome.levelAfter()).append("!");
         }
-        return message;
+        if (outcome.hasLoot()) {
+            message.append(" Hai recuperato: ")
+                    .append(String.join(", ", outcome.loot().stream().map(Item::name).toList()))
+                    .append(".");
+        }
+        return message.toString();
     }
 }
