@@ -15,4 +15,17 @@ public sealed interface Item permits Weapon, Armor, Consumable {
     Rarity rarity();
 
     String description();
+
+    /**
+     * {@code true} se l'oggetto puo' essere indossato o impugnato.
+     * Lo switch e' esaustivo sulla gerarchia sealed: un nuovo tipo di oggetto
+     * obbligherebbe a dichiarare qui se sia equipaggiabile.
+     */
+    default boolean equippable() {
+        return switch (this) {
+            case Weapon weapon -> true;
+            case Armor armor -> true;
+            case Consumable consumable -> false;
+        };
+    }
 }

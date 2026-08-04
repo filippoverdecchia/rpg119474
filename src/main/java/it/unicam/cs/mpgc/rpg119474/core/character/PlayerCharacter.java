@@ -3,6 +3,7 @@ package it.unicam.cs.mpgc.rpg119474.core.character;
 import it.unicam.cs.mpgc.rpg119474.core.attribute.AttributeModifier;
 import it.unicam.cs.mpgc.rpg119474.core.attribute.Attributes;
 import it.unicam.cs.mpgc.rpg119474.core.item.Armor;
+import it.unicam.cs.mpgc.rpg119474.core.item.Consumable;
 import it.unicam.cs.mpgc.rpg119474.core.item.Inventory;
 import it.unicam.cs.mpgc.rpg119474.core.item.Item;
 import it.unicam.cs.mpgc.rpg119474.core.item.Weapon;
@@ -70,6 +71,38 @@ public class PlayerCharacter extends AbstractCharacter {
     public void equip(Armor newArmor) {
         this.armor = Objects.requireNonNull(newArmor, "newArmor");
         clampHealth();
+    }
+
+    /**
+     * Equipaggia un oggetto preso dall'inventario. L'oggetto esce dall'inventario e
+     * quello eventualmente sostituito vi rientra, cosi' nulla va perduto.
+     * <p>
+     * Lo switch sulla gerarchia sealed {@link Item} e' esaustivo: se in futuro
+     * comparisse un nuovo tipo di oggetto, il compilatore obbligherebbe a decidere
+     * qui come trattarlo.
+     *
+     * @return {@code true} se l'oggetto era nell'inventario ed e' equipaggiabile
+     */
+    public boolean equipFromInventory(Item item) {
+        Objects.requireNonNull(item, "item");
+        if (!inventory.asList().contains(item)) {
+            return false;
+        }
+        return switch (item) {
+            case Weapon newWeapon -> {
+                inventory.remove(item);
+                weapon().ifPresent(inventory::add);
+                equip(newWeapon);
+                yield true;
+            }
+            case Armor newArmor -> {
+                inventory.remove(item);
+                armor().ifPresent(inventory::add);
+                equip(newArmor);
+                yield true;
+            }
+            case Consumable ignored -> false; // si consuma, non si indossa
+        };
     }
 
     /** Aggiunge esperienza e applica eventuali passaggi di livello. */
