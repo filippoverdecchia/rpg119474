@@ -4,6 +4,7 @@ import it.unicam.cs.mpgc.rpg119474.core.ability.Ability;
 import it.unicam.cs.mpgc.rpg119474.core.ability.EffectResult;
 import it.unicam.cs.mpgc.rpg119474.core.character.GameCharacter;
 import it.unicam.cs.mpgc.rpg119474.core.dice.RandomSource;
+import it.unicam.cs.mpgc.rpg119474.core.item.Consumable;
 import it.unicam.cs.mpgc.rpg119474.engine.event.EventPublisher;
 import it.unicam.cs.mpgc.rpg119474.engine.event.Observer;
 
@@ -86,6 +87,21 @@ public class TurnBasedCombatEngine implements CombatEngine {
             winner = currentActor;
             events.publish(new CombatEvent.CombatEnded(winner));
         }
+    }
+
+    @Override
+    public void useConsumable(Consumable item) {
+        Objects.requireNonNull(item, "item");
+        requireNotOver();
+        if (CONSUMABLE_ACTION_POINT_COST > currentActionPoints) {
+            throw new IllegalStateException("Punti Azione insufficienti per usare " + item.name());
+        }
+        currentActionPoints -= CONSUMABLE_ACTION_POINT_COST;
+
+        int healthBefore = currentActor.currentHealth();
+        currentActor.heal(item.healthRestored());
+        int restored = currentActor.currentHealth() - healthBefore;
+        events.publish(new CombatEvent.ItemUsed(currentActor, item, restored));
     }
 
     @Override

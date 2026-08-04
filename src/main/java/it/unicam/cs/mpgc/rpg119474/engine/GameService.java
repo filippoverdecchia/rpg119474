@@ -4,6 +4,7 @@ import it.unicam.cs.mpgc.rpg119474.core.ability.Ability;
 import it.unicam.cs.mpgc.rpg119474.core.character.Enemy;
 import it.unicam.cs.mpgc.rpg119474.core.character.GameCharacter;
 import it.unicam.cs.mpgc.rpg119474.core.character.PlayerCharacter;
+import it.unicam.cs.mpgc.rpg119474.core.item.Consumable;
 import it.unicam.cs.mpgc.rpg119474.engine.ai.EnemyStrategy;
 import it.unicam.cs.mpgc.rpg119474.engine.combat.CombatEvent;
 import it.unicam.cs.mpgc.rpg119474.engine.event.Observer;
@@ -31,6 +32,12 @@ public interface GameService {
 
     /** Il giocatore usa un'abilita' su un bersaglio. */
     void playerUseAbility(Ability ability, GameCharacter target);
+
+    /**
+     * Il giocatore usa un consumabile del proprio inventario: spende Punti Azione,
+     * recupera salute e l'oggetto viene consumato.
+     */
+    void playerUseConsumable(Consumable item);
 
     /** Il giocatore termina il turno; il servizio fa quindi agire il nemico. */
     void playerEndTurn();

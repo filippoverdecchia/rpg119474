@@ -24,6 +24,9 @@ public final class CombatEventFormatter {
             case CombatEvent.TurnStarted t ->
                     "-- Turno di " + t.actor().name() + " (PA " + t.actionPoints() + ")";
             case CombatEvent.AbilityUsed a -> "   " + a.result().message();
+            case CombatEvent.ItemUsed i ->
+                    "   " + i.actor().name() + " usa " + i.item().name()
+                            + " e recupera " + i.healthRestored() + " PV.";
             case CombatEvent.CharacterDefeated d ->
                     "   " + d.character().name() + " e' stato sconfitto!";
             case CombatEvent.CombatEnded c -> "Vince " + c.winner().name() + "!";

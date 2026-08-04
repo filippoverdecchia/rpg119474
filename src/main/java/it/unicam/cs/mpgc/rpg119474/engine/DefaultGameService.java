@@ -5,24 +5,26 @@ import it.unicam.cs.mpgc.rpg119474.core.character.Enemy;
 import it.unicam.cs.mpgc.rpg119474.core.character.GameCharacter;
 import it.unicam.cs.mpgc.rpg119474.core.character.PlayerCharacter;
 import it.unicam.cs.mpgc.rpg119474.core.dice.RandomSource;
+import it.unicam.cs.mpgc.rpg119474.core.item.Consumable;
 import it.unicam.cs.mpgc.rpg119474.engine.ai.EnemyAction;
 import it.unicam.cs.mpgc.rpg119474.engine.ai.EnemyStrategy;
 import it.unicam.cs.mpgc.rpg119474.engine.combat.CombatEngine;
 import it.unicam.cs.mpgc.rpg119474.engine.combat.CombatEvent;
 import it.unicam.cs.mpgc.rpg119474.engine.combat.TurnBasedCombatEngine;
 import it.unicam.cs.mpgc.rpg119474.engine.event.Observer;
+import it.unicam.cs.mpgc.rpg119474.engine.loot.DefaultLootService;
 import it.unicam.cs.mpgc.rpg119474.engine.progression.DefaultProgressionService;
 import it.unicam.cs.mpgc.rpg119474.engine.progression.ProgressionService;
 import it.unicam.cs.mpgc.rpg119474.engine.progression.VictoryOutcome;
-import it.unicam.cs.mpgc.rpg119474.engine.loot.DefaultLootService;
 
 import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Implementazione di default del {@link GameService}. Crea un motore a turni per
- * il duello e, quando tocca al nemico, ne guida le mosse tramite la
- * {@link EnemyStrategy}. La casualita' e' iniettata (testabilita').
+ * il duello, guida le mosse del nemico tramite la {@link EnemyStrategy} e delega
+ * la ricompensa della vittoria al {@link ProgressionService}. Sia la casualita'
+ * sia la regola di progressione sono iniettate, quindi sostituibili e testabili.
  */
 public class DefaultGameService implements GameService {
 
@@ -83,6 +85,17 @@ public class DefaultGameService implements GameService {
     public void playerUseAbility(Ability ability, GameCharacter target) {
         requirePlayerTurn();
         engine.useAbility(ability, target);
+    }
+
+    @Override
+    public void playerUseConsumable(Consumable item) {
+        Objects.requireNonNull(item, "item");
+        requirePlayerTurn();
+        if (!player.inventory().asList().contains(item)) {
+            throw new IllegalArgumentException("Il giocatore non possiede " + item.name());
+        }
+        engine.useConsumable(item);
+        player.inventory().remove(item);
     }
 
     @Override
