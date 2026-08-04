@@ -3,8 +3,12 @@ package it.unicam.cs.mpgc.rpg119474.ui;
 import it.unicam.cs.mpgc.rpg119474.core.ability.Ability;
 import it.unicam.cs.mpgc.rpg119474.core.character.GameCharacter;
 import it.unicam.cs.mpgc.rpg119474.core.character.PlayerCharacter;
+import it.unicam.cs.mpgc.rpg119474.core.item.Armor;
+import it.unicam.cs.mpgc.rpg119474.core.item.Consumable;
 import it.unicam.cs.mpgc.rpg119474.core.item.Item;
+import it.unicam.cs.mpgc.rpg119474.core.item.Weapon;
 import it.unicam.cs.mpgc.rpg119474.engine.GameService;
+import it.unicam.cs.mpgc.rpg119474.engine.combat.CombatEngine;
 import it.unicam.cs.mpgc.rpg119474.engine.combat.CombatEvent;
 
 import javafx.geometry.Insets;
@@ -24,7 +28,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Schermata di combattimento: combattenti, log, comandi, zaino, salvataggio e progressione. */
+/**
+ * Schermata di combattimento: combattenti, log degli eventi, azioni di turno
+ * (abilita' e consumabili), zaino, salvataggio e proseguimento.
+ */
 public class CombatView {
 
     /** Invocato una volta quando il giocatore vince; restituisce un messaggio da mostrare nel log. */
@@ -47,6 +54,7 @@ public class CombatView {
     private final TextArea log = new TextArea();
     private final Label turnLabel = new Label();
     private final Label apLabel = new Label();
+    private final Label equipmentLabel = new Label();
     private final Label resultLabel = new Label();
 
     private final ProgressBar playerHp = new ProgressBar(1);
@@ -59,6 +67,10 @@ public class CombatView {
     private final Button saveButton = new Button("Salva sopravvissuto");
     private final Button menuButton = new Button("Torna al menu");
     private final Button nextEnemyButton = new Button("Affronta un nuovo nemico");
+
+    private final ComboBox<Consumable> consumableBox = new ComboBox<>();
+    private final Button useItemButton =
+            new Button("Usa (PA " + CombatEngine.CONSUMABLE_ACTION_POINT_COST + ")");
     private final ComboBox<Item> inventoryBox = new ComboBox<>();
     private final Button equipButton = new Button("Equipaggia");
 
@@ -83,8 +95,8 @@ public class CombatView {
         log.setEditable(false);
         log.setWrapText(true);
 
-        VBox playerPanel = new VBox(6,
-                new Label(player.name() + " (giocatore)"), playerHpLabel, playerHp, apLabel);
+        VBox playerPanel = new VBox(6, new Label(player.name() + " (giocatore)"),
+                playerHpLabel, playerHp, apLabel, equipmentLabel);
         playerPanel.setPadding(new Insets(10));
 
         VBox enemyPanel = new VBox(6,
@@ -96,42 +108,46 @@ public class CombatView {
         top.setAlignment(Pos.CENTER);
         top.setPadding(new Insets(10));
 
-        HBox controls = new HBox(8);
-        controls.setPadding(new Insets(10));
-        controls.setAlignment(Pos.CENTER_LEFT);
+        // Azioni disponibili durante il proprio turno.
+        HBox turnActions = new HBox(8);
+        turnActions.setAlignment(Pos.CENTER_LEFT);
+        turnActions.setPadding(new Insets(10, 10, 0, 10));
         for (Ability ability : player.abilities()) {
             Button button = new Button(ability.name() + " (PA " + ability.actionPointCost() + ")");
             abilityButtons.put(button, ability);
-            controls.getChildren().add(button);
+            turnActions.getChildren().add(button);
         }
-        controls.getChildren().add(endTurnButton);
+        configureConverter(consumableBox);
+        turnActions.getChildren().addAll(consumableBox, useItemButton, endTurnButton);
 
-        nextEnemyButton.setDisable(true);
-        equipButton.setDisable(true);
-        inventoryBox.setDisable(true);
-        inventoryBox.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(Item item) {
-                return item == null ? "" : item.name();
-            }
-
-            @Override
-            public Item fromString(String value) {
-                return null;
-            }
-        });
-
-        HBox actions = new HBox(8, saveButton, menuButton, nextEnemyButton,
+        // Azioni fuori dal turno: gestione del personaggio e proseguimento.
+        configureConverter(inventoryBox);
+        HBox metaActions = new HBox(8, saveButton, menuButton, nextEnemyButton,
                 new Label("Zaino:"), inventoryBox, equipButton);
-        actions.setAlignment(Pos.CENTER_LEFT);
-        actions.setPadding(new Insets(0, 10, 0, 10));
+        metaActions.setAlignment(Pos.CENTER_LEFT);
+        metaActions.setPadding(new Insets(0, 10, 0, 10));
 
-        VBox bottom = new VBox(6, turnLabel, controls, actions, resultLabel);
+        VBox bottom = new VBox(6, turnLabel, turnActions, metaActions, resultLabel);
         bottom.setPadding(new Insets(10));
 
         root.setTop(top);
         root.setCenter(log);
         root.setBottom(bottom);
+    }
+
+    /** Nelle tendine si mostra il nome dell'oggetto, non la sua rappresentazione tecnica. */
+    private static <T extends Item> void configureConverter(ComboBox<T> box) {
+        box.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(T item) {
+                return item == null ? "" : item.name();
+            }
+
+            @Override
+            public T fromString(String value) {
+                return null;
+            }
+        });
     }
 
     private void wireActions() {
@@ -146,12 +162,13 @@ public class CombatView {
             game.playerEndTurn();
             refresh();
         });
-        saveButton.setOnAction(event -> {
-            onSave.run();
-            log.appendText("Sopravvissuto salvato.\n");
+        useItemButton.setOnAction(event -> {
+            Consumable chosen = consumableBox.getValue();
+            if (chosen != null) {
+                game.playerUseConsumable(chosen);
+                refresh();
+            }
         });
-        menuButton.setOnAction(event -> onBackToMenu.run());
-        nextEnemyButton.setOnAction(event -> onNextEnemy.run());
         equipButton.setOnAction(event -> {
             Item chosen = inventoryBox.getValue();
             if (chosen != null && player.equipFromInventory(chosen)) {
@@ -159,6 +176,12 @@ public class CombatView {
                 refresh();
             }
         });
+        saveButton.setOnAction(event -> {
+            onSave.run();
+            log.appendText("Sopravvissuto salvato.\n");
+        });
+        menuButton.setOnAction(event -> onBackToMenu.run());
+        nextEnemyButton.setOnAction(event -> onNextEnemy.run());
     }
 
     /** Osservatore degli eventi: aggiunge una riga al log e gestisce la vittoria del giocatore. */
@@ -175,13 +198,15 @@ public class CombatView {
         }
     }
 
-    /** Aggiorna barre dei PV, Punti Azione, zaino, etichette e stato dei pulsanti. */
+    /** Aggiorna barre dei PV, Punti Azione, equipaggiamento, zaino e stato dei comandi. */
     public void refresh() {
         playerHp.setProgress(healthFraction(player));
         playerHpLabel.setText("PV " + player.currentHealth() + "/" + player.maxHealth());
         enemyHp.setProgress(healthFraction(enemy));
         enemyHpLabel.setText("PV " + enemy.currentHealth() + "/" + enemy.maxHealth());
         apLabel.setText("Punti Azione: " + game.currentActionPoints());
+        equipmentLabel.setText("Arma: " + player.weapon().map(Weapon::name).orElse("nessuna")
+                + " | Armatura: " + player.armor().map(Armor::name).orElse("nessuna"));
 
         boolean playerTurn = !game.isOver() && game.currentActor() == player;
         turnLabel.setText(game.isOver() ? "Combattimento terminato"
@@ -194,7 +219,9 @@ public class CombatView {
 
         boolean playerWon = game.isOver() && game.winner().map(winner -> winner == player).orElse(false);
         nextEnemyButton.setDisable(!playerWon);
-        refreshInventory(playerWon);
+
+        refreshConsumables(playerTurn);
+        refreshEquippable(playerWon);
 
         if (game.isOver()) {
             String winner = game.winner().map(GameCharacter::name).orElse("nessuno");
@@ -202,19 +229,32 @@ public class CombatView {
         }
     }
 
-    /** Mostra nello zaino i soli oggetti equipaggiabili, utilizzabili tra un duello e l'altro. */
-    private void refreshInventory(boolean playerWon) {
+    /** I consumabili si usano durante il proprio turno, se restano abbastanza Punti Azione. */
+    private void refreshConsumables(boolean playerTurn) {
+        List<Consumable> consumables = player.inventory().stream()
+                .filter(Consumable.class::isInstance)
+                .map(Consumable.class::cast)
+                .toList();
+        Consumable previous = consumableBox.getValue();
+        consumableBox.getItems().setAll(consumables);
+        boolean canUse = playerTurn && !consumables.isEmpty()
+                && game.currentActionPoints() >= CombatEngine.CONSUMABLE_ACTION_POINT_COST;
+        consumableBox.setDisable(!canUse);
+        useItemButton.setDisable(!canUse);
+        consumableBox.setValue(consumables.isEmpty() ? null
+                : (consumables.contains(previous) ? previous : consumables.get(0)));
+    }
+
+    /** L'equipaggiamento si cambia tra un duello e l'altro, a scontro concluso. */
+    private void refreshEquippable(boolean playerWon) {
         List<Item> equippable = player.inventory().stream().filter(Item::equippable).toList();
         Item previous = inventoryBox.getValue();
         inventoryBox.getItems().setAll(equippable);
         boolean canEquip = playerWon && !equippable.isEmpty();
         inventoryBox.setDisable(!canEquip);
         equipButton.setDisable(!canEquip);
-        if (canEquip) {
-            inventoryBox.setValue(equippable.contains(previous) ? previous : equippable.get(0));
-        } else {
-            inventoryBox.setValue(null);
-        }
+        inventoryBox.setValue(equippable.isEmpty() ? null
+                : (equippable.contains(previous) ? previous : equippable.get(0)));
     }
 
     private static double healthFraction(GameCharacter character) {
