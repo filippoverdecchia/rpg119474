@@ -1,9 +1,12 @@
 package it.unicam.cs.mpgc.rpg119474.core.character;
 
 import it.unicam.cs.mpgc.rpg119474.core.item.Armor;
+import it.unicam.cs.mpgc.rpg119474.core.item.Item;
 import it.unicam.cs.mpgc.rpg119474.core.item.Weapon;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Stato salvabile di un personaggio giocante: solo dati (niente comportamento),
@@ -12,6 +15,12 @@ import java.io.Serializable;
  * possono essere {@code null} se non equipaggiati.
  */
 public record CharacterSnapshot(String name, SurvivorClass survivorClass, int experience,
-                                int currentHealth, Weapon weapon, Armor armor)
+                                int currentHealth, Weapon weapon, Armor armor,
+                                List<Item> inventory)
         implements Serializable {
+
+    public CharacterSnapshot {
+        Objects.requireNonNull(inventory, "inventory");
+        inventory = List.copyOf(inventory);
+    }
 }

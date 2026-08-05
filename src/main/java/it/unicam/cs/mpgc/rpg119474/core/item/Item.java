@@ -1,5 +1,7 @@
 package it.unicam.cs.mpgc.rpg119474.core.item;
 
+import java.io.Serializable;
+
 /**
  * Oggetto del gioco.
  * <p>
@@ -7,8 +9,12 @@ package it.unicam.cs.mpgc.rpg119474.core.item;
  * {@link Armor} e {@link Consumable}. Cosi' il pattern matching sugli oggetti
  * resta esaustivo e l'aggiunta di un nuovo tipo e' una scelta esplicita e
  * controllata (Open/Closed Principle).
+ * <p>
+ * L'interfaccia estende {@link Serializable}: essendo la gerarchia chiusa, ogni
+ * oggetto del gioco e' per costruzione salvabile, senza doverlo ricordare in
+ * ciascun sottotipo.
  */
-public sealed interface Item permits Weapon, Armor, Consumable {
+public sealed interface Item extends Serializable permits Weapon, Armor, Consumable {
 
     String name();
 

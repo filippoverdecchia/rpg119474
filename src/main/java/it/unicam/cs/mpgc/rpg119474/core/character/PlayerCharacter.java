@@ -143,7 +143,7 @@ public class PlayerCharacter extends AbstractCharacter {
     /** Crea la fotografia salvabile dello stato attuale del personaggio. */
     public CharacterSnapshot toSnapshot() {
         return new CharacterSnapshot(name(), survivorClass, experience, currentHealth(),
-                weapon, armor);
+                weapon, armor, inventory.asList());
     }
 
     /** Ricostruisce un personaggio a partire da una fotografia salvata. */
@@ -155,6 +155,7 @@ public class PlayerCharacter extends AbstractCharacter {
         if (snapshot.armor() != null) {
             survivor.equip(snapshot.armor());
         }
+        snapshot.inventory().forEach(survivor.inventory()::add);
         survivor.gainExperience(snapshot.experience());
         survivor.setCurrentHealth(snapshot.currentHealth());
         return survivor;
