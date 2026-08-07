@@ -7,6 +7,7 @@ import it.unicam.cs.mpgc.rpg119474.core.item.Consumable;
 import it.unicam.cs.mpgc.rpg119474.core.item.Inventory;
 import it.unicam.cs.mpgc.rpg119474.core.item.Item;
 import it.unicam.cs.mpgc.rpg119474.core.item.Weapon;
+import it.unicam.cs.mpgc.rpg119474.core.stats.DerivedStats;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -27,6 +28,12 @@ public class PlayerCharacter extends AbstractCharacter {
     private int level = 1;
     private int experience = 0;
 
+    // Scheda del personaggio calcolata su richiesta e conservata finche' resta valida:
+    // la UI e il calcolo del danno la interrogano molte volte per ogni azione, mentre
+    // cambia solo con l'equipaggiamento o con un passaggio di livello.
+    private Attributes cachedAttributes;
+    private DerivedStats cachedDerived;
+
     public PlayerCharacter(String name, SurvivorClass survivorClass) {
         this(name, survivorClass, ExperienceCurve.standard());
     }
@@ -39,7 +46,24 @@ public class PlayerCharacter extends AbstractCharacter {
 
     @Override
     public Attributes attributes() {
-        return withLevelGrowth(baseAttributes(), level).with(equipmentModifier());
+        if (cachedAttributes == null) {
+            cachedAttributes = withLevelGrowth(baseAttributes(), level).with(equipmentModifier());
+        }
+        return cachedAttributes;
+    }
+
+    @Override
+    public DerivedStats derived() {
+        if (cachedDerived == null) {
+            cachedDerived = DerivedStats.from(attributes());
+        }
+        return cachedDerived;
+    }
+
+    /** Da chiamare a ogni cambiamento che altera la scheda: equipaggiamento o livello. */
+    private void invalidateSheet() {
+        cachedAttributes = null;
+        cachedDerived = null;
     }
 
     @Override
@@ -65,11 +89,13 @@ public class PlayerCharacter extends AbstractCharacter {
 
     public void equip(Weapon newWeapon) {
         this.weapon = Objects.requireNonNull(newWeapon, "newWeapon");
+        invalidateSheet();
         clampHealth();
     }
 
     public void equip(Armor newArmor) {
         this.armor = Objects.requireNonNull(newArmor, "newArmor");
+        invalidateSheet();
         clampHealth();
     }
 
@@ -111,8 +137,12 @@ public class PlayerCharacter extends AbstractCharacter {
             throw new IllegalArgumentException("amount deve essere >= 0");
         }
         experience += amount;
+        int levelBefore = level;
         while (experience >= experienceCurve.experienceForLevel(level + 1)) {
             level++;
+        }
+        if (level != levelBefore) {
+            invalidateSheet();
         }
     }
 

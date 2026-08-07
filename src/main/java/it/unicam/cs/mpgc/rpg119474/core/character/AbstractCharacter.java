@@ -4,7 +4,6 @@ import it.unicam.cs.mpgc.rpg119474.core.ability.Ability;
 import it.unicam.cs.mpgc.rpg119474.core.attribute.Attributes;
 import it.unicam.cs.mpgc.rpg119474.core.stats.DerivedStats;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,7 +22,7 @@ public abstract class AbstractCharacter implements GameCharacter {
     protected AbstractCharacter(String name, Attributes baseAttributes, List<Ability> abilities) {
         this.name = Objects.requireNonNull(name, "name");
         this.baseAttributes = Objects.requireNonNull(baseAttributes, "baseAttributes");
-        this.abilities = new ArrayList<>(Objects.requireNonNull(abilities, "abilities"));
+        this.abilities = List.copyOf(Objects.requireNonNull(abilities, "abilities"));
         this.currentHealth = DerivedStats.from(baseAttributes).maxHealth();
     }
 
@@ -48,7 +47,9 @@ public abstract class AbstractCharacter implements GameCharacter {
 
     @Override
     public List<Ability> abilities() {
-        return List.copyOf(abilities);
+        // Gia' non modificabile e mai riassegnata: si puo' restituire direttamente,
+        // senza creare una copia difensiva a ogni chiamata.
+        return abilities;
     }
 
     @Override
