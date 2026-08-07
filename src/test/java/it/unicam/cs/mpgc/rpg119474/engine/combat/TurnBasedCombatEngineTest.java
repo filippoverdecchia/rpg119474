@@ -121,7 +121,7 @@ class TurnBasedCombatEngineTest {
     void bringingTheTargetToZeroEndsTheCombat() {
         engine.start();
 
-        engine.useAbility(blow("Colpo fatale", 0, 1000), slow);
+        engine.useAbility(blow("Colpo fatale", 1, 1000), slow);
 
         assertTrue(engine.isOver());
         assertEquals(fast, engine.winner().orElseThrow());
@@ -132,9 +132,9 @@ class TurnBasedCombatEngineTest {
     @Test
     void noActionIsAllowedAfterTheEnd() {
         engine.start();
-        engine.useAbility(blow("Colpo fatale", 0, 1000), slow);
+        engine.useAbility(blow("Colpo fatale", 1, 1000), slow);
 
-        assertThrows(IllegalStateException.class, () -> engine.useAbility(blow("Ancora", 0, 1), slow));
+        assertThrows(IllegalStateException.class, () -> engine.useAbility(blow("Ancora", 1, 1), slow));
         assertThrows(IllegalStateException.class, engine::endTurn);
     }
 

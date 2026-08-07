@@ -15,8 +15,8 @@ public record Ability(String name, int actionPointCost, AbilityEffect effect) {
     public Ability {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(effect, "effect");
-        if (actionPointCost < 0) {
-            throw new IllegalArgumentException("actionPointCost deve essere >= 0");
+        if (actionPointCost < 1) {
+            throw new IllegalArgumentException("actionPointCost deve essere >= 1: ogni azione consuma il turno");
         }
     }
 

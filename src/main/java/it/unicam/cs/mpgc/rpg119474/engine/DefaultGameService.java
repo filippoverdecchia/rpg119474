@@ -116,15 +116,20 @@ public class DefaultGameService implements GameService {
         return Optional.of(progressionService.awardVictory(player, enemy));
     }
 
-    /** Fa agire il nemico (guidato dall'IA) finche' e' il suo turno. */
+    /**
+     * Fa agire il nemico finche' e' il suo turno. Dentro al turno l'IA continua a
+     * decidere finche' le restano Punti Azione da spendere, esattamente come puo'
+     * fare il giocatore: ogni abilita' ne costa almeno uno, quindi il ciclo termina.
+     */
     private void runEnemyTurnsIfNeeded() {
         while (!engine.isOver() && engine.currentActor() == enemy) {
             Optional<EnemyAction> action =
                     enemyStrategy.decide(enemy, player, engine.currentActionPoints());
-            action.ifPresent(a -> engine.useAbility(a.ability(), a.target()));
-            if (!engine.isOver()) {
-                engine.endTurn();
+            if (action.isPresent()) {
+                engine.useAbility(action.get().ability(), action.get().target());
+                continue;
             }
+            engine.endTurn();
         }
     }
 

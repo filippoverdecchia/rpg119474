@@ -20,7 +20,7 @@ public final class Abilities {
 
     // --- Mischia (Bruto) ---
     public static Ability basicMelee() {
-        return attack("Colpo in mischia", 0, DamageType.MISCHIA, Attributes::forza, Dice.of(1, 6));
+        return attack("Colpo in mischia", 2, DamageType.MISCHIA, Attributes::forza, Dice.of(1, 6));
     }
 
     public static Ability heavyBlow() {
