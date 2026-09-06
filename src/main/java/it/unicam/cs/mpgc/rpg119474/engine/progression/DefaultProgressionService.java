@@ -10,18 +10,33 @@ import java.util.Objects;
 
 /**
  * Progressione predefinita: il vincitore incassa l'esperienza del nemico
- * sconfitto, applica gli eventuali passaggi di livello, recupera i punti vita e
- * raccoglie nell'inventario il bottino deciso dal {@link LootService}.
+ * sconfitto, applica gli eventuali passaggi di livello, recupera una quota dei
+ * punti vita e raccoglie nell'inventario il bottino deciso dal {@link LootService}.
  * <p>
- * La regola del bottino e' iniettata, quindi sostituibile senza toccare questa
- * classe (Dependency Inversion).
+ * Quanto si recupera e' un parametro perche' cambia il senso del gioco: negli
+ * scontri isolati conviene ripartire in forze, mentre in una campagna il
+ * recupero e' parziale e le scorte diventano una risorsa da amministrare.
+ * Insieme alla regola del bottino, anch'essa iniettata, questa classe resta
+ * valida senza modifiche in entrambe le modalita' (Open/Closed).
  */
 public class DefaultProgressionService implements ProgressionService {
 
+    /** Recupero completo: e' il comportamento degli scontri singoli. */
+    private static final int FULL_RECOVERY = 100;
+
     private final LootService lootService;
+    private final int healthRecoveryPercent;
 
     public DefaultProgressionService(LootService lootService) {
+        this(lootService, FULL_RECOVERY);
+    }
+
+    public DefaultProgressionService(LootService lootService, int healthRecoveryPercent) {
         this.lootService = Objects.requireNonNull(lootService, "lootService");
+        if (healthRecoveryPercent < 0 || healthRecoveryPercent > 100) {
+            throw new IllegalArgumentException("healthRecoveryPercent deve essere tra 0 e 100");
+        }
+        this.healthRecoveryPercent = healthRecoveryPercent;
     }
 
     @Override
@@ -32,7 +47,7 @@ public class DefaultProgressionService implements ProgressionService {
         int levelBefore = player.level();
         int reward = defeated.experienceReward();
         player.gainExperience(reward);
-        player.heal(player.maxHealth());
+        player.heal(player.maxHealth() * healthRecoveryPercent / 100);
 
         List<Item> loot = lootService.rollLoot(defeated);
         loot.forEach(player.inventory()::add);
