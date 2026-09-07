@@ -134,7 +134,7 @@ public class CampaignSession {
     }
 
     /** {@code true} se lo scontro e' finito ed e' stato vinto dal giocatore. */
-    public boolean playerWon() {
+    private boolean playerWon() {
         return game != null && game.isOver()
                 && game.winner().map(winner -> winner == run.player()).orElse(false);
     }

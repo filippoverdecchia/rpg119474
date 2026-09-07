@@ -3,12 +3,15 @@ package it.unicam.cs.mpgc.rpg119474.engine.factory;
 import it.unicam.cs.mpgc.rpg119474.core.ability.Abilities;
 import it.unicam.cs.mpgc.rpg119474.core.attribute.Attributes;
 import it.unicam.cs.mpgc.rpg119474.core.character.Enemy;
-import it.unicam.cs.mpgc.rpg119474.core.dice.RandomSource;
 
 import java.util.List;
-import java.util.function.Supplier;
 
-/** Crea i nemici predefiniti del gioco (Factory pattern). */
+/**
+ * Crea i nemici predefiniti del gioco (Factory pattern).
+ * <p>
+ * I metodi sono ordinati per pericolosita' crescente, la stessa in cui la
+ * campagna li dispone lungo il percorso.
+ */
 public final class EnemyFactory {
 
     private EnemyFactory() {
@@ -54,16 +57,5 @@ public final class EnemyFactory {
     public static Enemy wasteWarlord() {
         return new Enemy("Signore della Zona", new Attributes(8, 8, 8, 7, 5), 11,
                 List.of(Abilities.heavyBlow(), Abilities.burstFire(), Abilities.overcharge()), 250);
-    }
-
-    /** Tutti i nemici disponibili, come costruttori: un nuovo nemico si aggiunge qui. */
-    private static final List<Supplier<Enemy>> CATALOG =
-            List.of(EnemyFactory::scavenger, EnemyFactory::raider, EnemyFactory::mutantDog,
-                    EnemyFactory::militiaman, EnemyFactory::ghoul, EnemyFactory::mutatedBrute,
-                    EnemyFactory::raiderBoss);
-
-    /** Crea un nemico scelto a caso dal catalogo. */
-    public static Enemy random(RandomSource rng) {
-        return CATALOG.get(rng.nextInt(CATALOG.size())).get();
     }
 }
