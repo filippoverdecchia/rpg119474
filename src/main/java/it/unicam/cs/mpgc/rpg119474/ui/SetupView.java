@@ -1,8 +1,6 @@
 package it.unicam.cs.mpgc.rpg119474.ui;
 
-import it.unicam.cs.mpgc.rpg119474.core.character.Enemy;
 import it.unicam.cs.mpgc.rpg119474.core.character.SurvivorClass;
-import it.unicam.cs.mpgc.rpg119474.engine.factory.EnemyFactory;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,86 +14,83 @@ import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-/** Schermata iniziale: crea un nuovo sopravvissuto o caricane uno salvato. */
+/**
+ * Schermata iniziale: si crea un nuovo sopravvissuto per affrontare la campagna,
+ * oppure si riprende una partita lasciata a meta'.
+ */
 public class SetupView {
 
-    @FunctionalInterface
-    public interface StartHandler {
-        void onStart(String name, SurvivorClass survivorClass, Enemy enemy);
-    }
-
-    @FunctionalInterface
-    public interface LoadHandler {
-        void onLoad(String savedId, Enemy enemy);
-    }
+    private static final String DEFAULT_NAME = "Sopravvissuto";
 
     private final VBox root = new VBox(12);
-    private final TextField nameField = new TextField("Sopravvissuto");
+    private final TextField nameField = new TextField(DEFAULT_NAME);
     private final ComboBox<SurvivorClass> classBox = new ComboBox<>();
-    private final ComboBox<String> enemyBox = new ComboBox<>();
     private final ComboBox<String> savedBox = new ComboBox<>();
 
-    public SetupView(StartHandler onStart, List<String> savedIds, LoadHandler onLoad) {
+    /**
+     * @param campaignTitle nome della campagna, mostrato come titolo
+     * @param onStart       riceve nome e classe del nuovo sopravvissuto
+     * @param savedRuns     identificativi delle partite salvate
+     * @param onResume      riceve l'identificativo della partita da riprendere
+     */
+    public SetupView(String campaignTitle, BiConsumer<String, SurvivorClass> onStart,
+                     List<String> savedRuns, Consumer<String> onResume) {
+        Objects.requireNonNull(onStart, "onStart");
+        Objects.requireNonNull(savedRuns, "savedRuns");
+        Objects.requireNonNull(onResume, "onResume");
+
         classBox.getItems().setAll(SurvivorClass.values());
         classBox.setValue(SurvivorClass.BRUTO);
-        classBox.setConverter(new StringConverter<>() {
+        classBox.setConverter(new StringConverter<SurvivorClass>() {
             @Override
             public String toString(SurvivorClass survivorClass) {
                 return survivorClass == null ? "" : survivorClass.displayName();
             }
+
             @Override
             public SurvivorClass fromString(String value) {
                 return null;
             }
         });
 
-        enemyBox.getItems().setAll("Predone", "Cane mutante", "Ghoul inferocito", "Capo dei predoni");
-        enemyBox.setValue("Predone");
+        Button startButton = new Button("Parti per la campagna");
+        startButton.setOnAction(event -> onStart.accept(chosenName(), classBox.getValue()));
 
-        Button startButton = new Button("Inizia duello");
-        startButton.setOnAction(event -> {
-            String name = (nameField.getText() == null || nameField.getText().isBlank())
-                    ? "Sopravvissuto" : nameField.getText().trim();
-            onStart.onStart(name, classBox.getValue(), createEnemy(enemyBox.getValue()));
-        });
-
-        savedBox.getItems().setAll(savedIds);
-        Button loadButton = new Button("Carica e combatti");
-        boolean hasSaves = !savedIds.isEmpty();
+        savedBox.getItems().setAll(savedRuns);
+        Button resumeButton = new Button("Riprendi");
+        boolean hasSaves = !savedRuns.isEmpty();
         savedBox.setDisable(!hasSaves);
-        loadButton.setDisable(!hasSaves);
+        resumeButton.setDisable(!hasSaves);
         if (hasSaves) {
-            savedBox.setValue(savedIds.get(0));
+            savedBox.setValue(savedRuns.get(0));
         }
-        loadButton.setOnAction(event -> {
+        resumeButton.setOnAction(event -> {
             if (savedBox.getValue() != null) {
-                onLoad.onLoad(savedBox.getValue(), createEnemy(enemyBox.getValue()));
+                onResume.accept(savedBox.getValue());
             }
         });
 
         root.setAlignment(Pos.CENTER);
         root.setPadding(new Insets(20));
         root.getChildren().addAll(
-                new Label("Wasteland — crea il tuo sopravvissuto"),
-                new Label("Nome:"), nameField,
+                new Label("Wasteland - " + campaignTitle),
+                new Label("Nome del sopravvissuto:"), nameField,
                 new Label("Classe:"), classBox,
-                new Label("Nemico:"), enemyBox,
                 startButton,
-                new Label("— oppure carica un sopravvissuto salvato —"),
-                new HBox(8, savedBox, loadButton));
+                new Label("- oppure riprendi una partita salvata -"),
+                new HBox(8, savedBox, resumeButton));
     }
 
     public Parent getRoot() {
         return root;
     }
 
-    private Enemy createEnemy(String name) {
-        return switch (name) {
-            case "Cane mutante" -> EnemyFactory.mutantDog();
-            case "Ghoul inferocito" -> EnemyFactory.ghoul();
-            case "Capo dei predoni" -> EnemyFactory.raiderBoss();
-            default -> EnemyFactory.raider();
-        };
+    private String chosenName() {
+        String typed = nameField.getText();
+        return typed == null || typed.isBlank() ? DEFAULT_NAME : typed.trim();
     }
 }

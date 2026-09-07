@@ -3,6 +3,8 @@ package it.unicam.cs.mpgc.rpg119474.ui;
 import it.unicam.cs.mpgc.rpg119474.core.item.Item;
 import it.unicam.cs.mpgc.rpg119474.engine.combat.CombatEvent;
 import it.unicam.cs.mpgc.rpg119474.engine.progression.VictoryOutcome;
+import it.unicam.cs.mpgc.rpg119474.engine.campaign.CampaignStage;
+import it.unicam.cs.mpgc.rpg119474.engine.campaign.StageOutcome;
 
 /**
  * Traduce in testo per l'utente gli eventi di combattimento e l'esito di una
@@ -45,6 +47,31 @@ public final class CombatEventFormatter {
                     .append(String.join(", ", outcome.loot().stream().map(Item::name).toList()))
                     .append(".");
         }
+        return message.toString();
+    }
+
+        /** Intestazione della tappa in corso, del tipo "Tappa 3 di 8 - Il posto di blocco". */
+    public static String describe(CampaignStage stage, int stageCount) {
+        return "Tappa " + stage.number() + " di " + stageCount + " - " + stage.title();
+    }
+
+    /** Racconta com'e' finita una tappa della campagna. */
+    public static String describe(StageOutcome outcome) {
+        if (outcome.campaignComplete()) {
+            return "Hai superato l'ultima tappa: la campagna e' conclusa!";
+        }
+        if (outcome.cleared()) {
+            return "Tappa superata: " + outcome.stageTitle() + ". La strada prosegue.";
+        }
+        StringBuilder message = new StringBuilder("Sei stato sconfitto a ")
+                .append(outcome.stageTitle()).append('.');
+        if (outcome.hasLosses()) {
+            message.append(" Hai perso le scorte: ")
+                    .append(String.join(", ", ItemStack.group(outcome.suppliesLost().stream())
+                            .stream().map(ItemStack::label).toList()))
+                    .append('.');
+        }
+        message.append(" Ti rimetti in piedi e ritenti.");
         return message.toString();
     }
 }

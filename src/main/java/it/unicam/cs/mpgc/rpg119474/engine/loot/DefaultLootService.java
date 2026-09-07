@@ -15,12 +15,27 @@ import java.util.Objects;
  */
 public class DefaultLootService implements LootService {
 
-    /** Tabella predefinita: piu' il nemico e' duro, piu' oggetti puo' lasciare. */
+    /**
+     * Tabella predefinita, ordinata per difficolta' crescente del nemico: dai
+     * predoni dei margini si recuperano medicine e protezioni leggere, mentre le
+     * armi migliori e le corazze pesanti si trovano solo addosso agli avversari
+     * piu' temibili.
+     * <p>
+     * Nessuna soglia arriva fino all'avversario finale: un oggetto ottenibile
+     * soltanto dall'ultimo nemico non potrebbe mai essere usato, perche' con
+     * quella vittoria la campagna si chiude.
+     */
     private static final List<LootEntry> DEFAULT_TABLE = List.of(
-            new LootEntry(ItemFactory::medikit, 60, 0),
+            new LootEntry(ItemFactory::medikit, 55, 0),
+            new LootEntry(ItemFactory::scavengedRifle, 30, 50),
             new LootEntry(ItemFactory::leatherArmor, 35, 50),
-            new LootEntry(ItemFactory::combatArmor, 25, 90),
-            new LootEntry(ItemFactory::plasmaPistol, 20, 150));
+            new LootEntry(ItemFactory::spikedMace, 30, 60),
+            new LootEntry(ItemFactory::combatArmor, 30, 75),
+            new LootEntry(ItemFactory::regenSerum, 30, 90),
+            new LootEntry(ItemFactory::assaultRifle, 30, 90),
+            new LootEntry(ItemFactory::plasmaPistol, 30, 90),
+            new LootEntry(ItemFactory::exoskeleton, 25, 90),
+            new LootEntry(ItemFactory::inductionCannon, 20, 110));
 
     private final RandomSource rng;
     private final List<LootEntry> table;

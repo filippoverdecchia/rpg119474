@@ -49,6 +49,31 @@ public final class ItemFactory {
         return new Consumable("Medikit", Rarity.COMUNE, "Ripristina punti vita.", 30);
     }
 
+        public static Weapon spikedMace() {
+        return new Weapon("Mazza chiodata", Rarity.NON_COMUNE, "Pesante, e non perdona.",
+                DamageType.MISCHIA, 9, new AttributeModifier(1, 0, 0, 0, 0));
+    }
+
+    public static Weapon assaultRifle() {
+        return new Weapon("Fucile d'assalto", Rarity.RARA, "Militare, tenuto in ordine.",
+                DamageType.BALISTICO, 11, new AttributeModifier(0, 1, 0, 0, 0));
+    }
+
+    public static Weapon inductionCannon() {
+        return new Weapon("Cannone a induzione", Rarity.EPICA, "Buca qualsiasi corazza.",
+                DamageType.ENERGIA, 13, AttributeModifier.NONE);
+    }
+
+    public static Armor exoskeleton() {
+        return new Armor("Esoscheletro", Rarity.LEGGENDARIA, "Servoassistito, quasi intatto.",
+                new AttributeModifier(0, 0, 5, 0, 0));
+    }
+
+    public static Consumable regenSerum() {
+        return new Consumable("Siero rigenerante", Rarity.RARA,
+                "Rimette in sesto anche le ferite peggiori.", 60);
+    }
+
     /** Arma iniziale adatta alla classe scelta. */
     public static Weapon startingWeaponFor(SurvivorClass survivorClass) {
         return switch (survivorClass) {
