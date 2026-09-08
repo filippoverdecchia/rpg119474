@@ -37,8 +37,8 @@ public final class Abilities {
             int total = 0;
             boolean anyCrit = false;
             for (int shot = 0; shot < 3; shot++) {
-                int raw = actor.attributes().percezione() / 2 + actor.weaponDamage() / 2
-                        + Dice.of(1, 4).roll(rng).total();
+                    int raw = actor.attributes().percezione() / 2 + actor.weaponDamage()
+                        + Dice.of(1, 6).roll(rng).total();
                 boolean crit = rng.nextInt(100) < actor.derived().critChance();
                 if (crit) {
                     raw = (int) Math.round(raw * 1.5);

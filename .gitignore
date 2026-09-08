@@ -17,3 +17,5 @@ Thumbs.db
 # Salvataggi di gioco generati a runtime
 saves/
 *.rpgsave
+
+bin/
