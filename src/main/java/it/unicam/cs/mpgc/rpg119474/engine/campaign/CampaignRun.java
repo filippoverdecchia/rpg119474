@@ -2,6 +2,7 @@ package it.unicam.cs.mpgc.rpg119474.engine.campaign;
 
 import it.unicam.cs.mpgc.rpg119474.core.character.PlayerCharacter;
 import it.unicam.cs.mpgc.rpg119474.core.item.Item;
+import it.unicam.cs.mpgc.rpg119474.core.character.CharacterSnapshots;
 
 import java.util.List;
 import java.util.Objects;
@@ -87,13 +88,13 @@ public class CampaignRun {
 
     /** Fotografia salvabile della partita. */
     public CampaignSave toSave() {
-        return new CampaignSave(player.toSnapshot(), currentStage);
+        return new CampaignSave(CharacterSnapshots.of(player), currentStage);
     }
 
     /** Riprende una partita da un salvataggio, ricostruendo il sopravvissuto. */
     public static CampaignRun resume(Campaign campaign, DefeatPenalty defeatPenalty, CampaignSave save) {
         Objects.requireNonNull(save, "save");
         return new CampaignRun(campaign, defeatPenalty,
-                PlayerCharacter.fromSnapshot(save.survivor()), save.currentStage());
+                CharacterSnapshots.restore(save.survivor()), save.currentStage());
     }
 }

@@ -3,6 +3,7 @@ package it.unicam.cs.mpgc.rpg119474.persistence;
 import it.unicam.cs.mpgc.rpg119474.core.character.CharacterSnapshot;
 import it.unicam.cs.mpgc.rpg119474.core.character.PlayerCharacter;
 import it.unicam.cs.mpgc.rpg119474.core.character.SurvivorClass;
+import it.unicam.cs.mpgc.rpg119474.core.character.CharacterSnapshots;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -19,9 +20,9 @@ class FileRepositoryTest {
         PlayerCharacter hero = new PlayerCharacter("Eroe", SurvivorClass.BRUTO);
         hero.gainExperience(100); // livello 2
 
-        repository.save("eroe", hero.toSnapshot());
+        repository.save("eroe", CharacterSnapshots.of(hero));
         CharacterSnapshot loaded = repository.load("eroe").orElseThrow();
-        PlayerCharacter restored = PlayerCharacter.fromSnapshot(loaded);
+        PlayerCharacter restored = CharacterSnapshots.restore(loaded);
 
         assertEquals("Eroe", restored.name());
         assertEquals(2, restored.level());

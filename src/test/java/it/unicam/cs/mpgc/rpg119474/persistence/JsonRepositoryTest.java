@@ -1,6 +1,7 @@
 package it.unicam.cs.mpgc.rpg119474.persistence;
 
 import it.unicam.cs.mpgc.rpg119474.core.character.CharacterSnapshot;
+import it.unicam.cs.mpgc.rpg119474.core.character.CharacterSnapshots;
 import it.unicam.cs.mpgc.rpg119474.core.character.PlayerCharacter;
 import it.unicam.cs.mpgc.rpg119474.core.character.SurvivorClass;
 import it.unicam.cs.mpgc.rpg119474.engine.factory.CharacterFactory;
@@ -34,8 +35,9 @@ class JsonRepositoryTest {
         hero.equipFromInventory(ItemFactory.leatherArmor());
         hero.takeDamage(15);
 
-        repository.save("vagabondo", hero.toSnapshot());
-        PlayerCharacter reloaded = PlayerCharacter.fromSnapshot(repository.load("vagabondo").orElseThrow());
+        repository.save("vagabondo", CharacterSnapshots.of(hero));
+        PlayerCharacter reloaded =
+                CharacterSnapshots.restore(repository.load("vagabondo").orElseThrow());
 
         assertEquals(hero.name(), reloaded.name());
         assertEquals(hero.survivorClass(), reloaded.survivorClass());
@@ -53,8 +55,9 @@ class JsonRepositoryTest {
         Repository<CharacterSnapshot> repository = repository(directory);
         PlayerCharacter hero = new PlayerCharacter("Nudo", SurvivorClass.MEDICO);
 
-        repository.save("nudo", hero.toSnapshot());
-        PlayerCharacter reloaded = PlayerCharacter.fromSnapshot(repository.load("nudo").orElseThrow());
+        repository.save("nudo", CharacterSnapshots.of(hero));
+        PlayerCharacter reloaded =
+                CharacterSnapshots.restore(repository.load("nudo").orElseThrow());
 
         assertTrue(reloaded.weapon().isEmpty());
         assertTrue(reloaded.armor().isEmpty());
@@ -66,7 +69,7 @@ class JsonRepositoryTest {
         Repository<CharacterSnapshot> repository = repository(directory);
         PlayerCharacter hero = new PlayerCharacter("Eroe", SurvivorClass.BRUTO);
         hero.inventory().add(ItemFactory.medikit());
-        repository.save("eroe", hero.toSnapshot());
+        repository.save("eroe", CharacterSnapshots.of(hero));
 
         String json = Files.readString(directory.resolve("eroe.json"));
 
@@ -79,8 +82,8 @@ class JsonRepositoryTest {
     @Test
     void listsAndDeletesTheSaves(@TempDir Path directory) {
         Repository<CharacterSnapshot> repository = repository(directory);
-        repository.save("uno", new PlayerCharacter("Uno", SurvivorClass.BRUTO).toSnapshot());
-        repository.save("due", new PlayerCharacter("Due", SurvivorClass.MEDICO).toSnapshot());
+        repository.save("uno", CharacterSnapshots.of(new PlayerCharacter("Uno", SurvivorClass.BRUTO)));
+        repository.save("due", CharacterSnapshots.of(new PlayerCharacter("Due", SurvivorClass.MEDICO)));
 
         assertEquals(List.of("due", "uno"), repository.listIds(), "gli id sono ordinati");
         assertTrue(repository.delete("uno"));
